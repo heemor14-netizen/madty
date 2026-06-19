@@ -1,1 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الاختبارات الذكية</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0284c7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* تأثير الزجاج الآيفوني iOS Glassmorphism */
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            background: linear-gradient(120deg, #bae6fd, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .question {
+            font-size: 18px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .options-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .option-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .option-item.selected {
+            background: rgba(14, 165, 233, 0.3);
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+
+        /* أزرار بنظام iOS */
+        .btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 14px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn:hover {
+            background: #0066cc;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* صفحة النتيجة */
+        .result-container {
+            text-align: center;
+            display: none;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #38bdf8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 20px auto;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .feedback {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #e0f2fe;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <!-- واجهة الأسئلة -->
+        <div id="quiz-box">
+            <h2 id="quiz-title">اختبار المهارات</h2>
+            <div class="question" id="question-text">جاري تحميل السؤال...</div>
+            <ul class="options-list" id="options-container">
+                <!-- الخيارات بتنزل هنا بالـ JS -->
+            </ul>
+            <button class="btn" id="next-btn" onclick="nextQuestion()">السؤال التالي</button>
+        </div>
+
+        <!-- واجهة النتيجة الثنائية -->
+        <div id="result-box" class="result-container">
+            <h2>انتهى الاختبار! 🎉</h2>
+            <div class="score-circle" id="score-text">0 / 0</div>
+            <div class="feedback" id="feedback-text">عمل رائع!</div>
+            <button class="btn" onclick="restartQuiz()">إعادة الاختبار</button>
+        </div>
+    </div>
+
+    <script>
+        // هنا حطينا الأسئلة اللي كانت بالبايثون داخل الجافا سكريبت مباشرة
+        const quizData = [
+            {
+                question: "ما هو الكوكب الملقب بالكوكب الأحمر؟",
+                options: ["المريخ", "الأرض", "المشتري", "عطارد"],
+                correct: 0
+            },
+            {
+                question: "أي من اللغات التالية تُستخدم لتطوير واجهات المواقع بشكل أساسي؟",
+                options: ["Python", "HTML", "C++", "Java"],
+                correct: 1
+            },
+            {
+                question: "ما هو الناتج الإجمالي لـ 5 + 5 × 2؟",
+                options: ["20", "15", "25", "30"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOptionIndex = null;
+
+        const questionText = document.getElementById("question-text");
+        const optionsContainer = document.getElementById("options-container");
+        const nextBtn = document.getElementById("next-btn");
+        const quizBox = document.getElementById("quiz-box");
+        const resultBox = document.getElementById("result-box");
+        const scoreText = document.getElementById("score-text");
+        const feedbackText = document.getElementById("feedback-text");
+
+        function loadQuestion() {
+            selectedOptionIndex = null;
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionText.innerText = `${currentQuestionIndex + 1}. ${currentQuestion.question}`;
+            optionsContainer.innerHTML = "";
+
+            currentQuestion.options.forEach((option, index) => {
+                const li = document.createElement("li");
+                li.classList.add("option-item");
+                li.innerText = option;
+                li.onclick = () => selectOption(li, index);
+                optionsContainer.appendChild(li);
+            });
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.innerText = "عرض النتيجة";
+            } else {
+                nextBtn.innerText = "السؤال التالي";
+            }
+        }
+
+        function selectOption(element, index) {
+            const allOptions = document.querySelectorAll(".option-item");
+            allOptions.forEach(opt => opt.classList.remove("selected"));
+            element.classList.add("selected");
+            selectedOptionIndex = index;
+        }
+
+        function nextQuestion() {
+            if (selectedOptionIndex === null) {
+                alert("يا بطل اختر إجابة أولاً! 🤔");
+                return;
+            }
+
+            if (selectedOptionIndex === quizData[currentQuestionIndex].correct) {
+                score++;
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizBox.style.display = "none";
+            resultBox.style.display = "block";
+            scoreText.innerText = `${score} / ${quizData.length}`;
+            
+            if (score === quizData.length) {
+                feedbackText.innerText = "أسطوووري! إجاباتك كلها صحيحة 🎯";
+            } else if (score >= quizData.length / 2) {
+                feedbackText.innerText = "كفو، نتيجتك ممتازة! 👍";
+            } else {
+                feedbackText.innerText = "معوض خير، ركز المرة الجاية! 📚";
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            resultBox.style.display = "none";
+            quizBox.style.display = "block";
+            loadQuestion();
+        }
+
+        // تشغيل الاختبار لأول مرة
+        loadQuestion();
+    </script>
+</body>
+</html>
 
